@@ -1,0 +1,15 @@
+{
+  "author": "eula",
+  "reason": "Isolate section boundaries and contextual headers in separate ablation rows.",
+  "original_contexts_verified": {
+    "B0": 60,
+    "V1": 60,
+    "V2": 60,
+    "V3": 60,
+    "V4": 60,
+    "V5": 60,
+    "V6": 60
+  },
+  "all_420_contexts_identical": true,
+  "fixed_generator_code_unchanged": true
+}

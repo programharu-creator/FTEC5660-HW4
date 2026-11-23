@@ -18,7 +18,7 @@ import time
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent
-VARIANTS = ('B0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6')
+VARIANTS = ('B0', 'V1', 'V2a', 'V2', 'V3', 'V4', 'V5', 'V6')
 
 
 class Tee:
@@ -161,15 +161,17 @@ def main():
     parser.add_argument('--variant', choices=VARIANTS, default='V6')
     parser.add_argument('--data-folder', default='public_test')
     parser.add_argument('--out')
+    parser.add_argument('--output-root', default='experiments')
     args = parser.parse_args()
     if args.all:
         if args.out:
             raise ValueError('Use --out with one variant')
         for variant in VARIANTS:
             subprocess.run([sys.executable, '-X', 'utf8', str(Path(__file__).resolve()),
-                            '--variant', variant, '--data-folder', args.data_folder], cwd=ROOT,
+                            '--variant', variant, '--data-folder', args.data_folder,
+                            '--out', str(Path(args.output_root)/variant)], cwd=ROOT,
                            env={**os.environ, 'PYTHONUTF8': '1'}, check=True, timeout=1800)
-        shutil.copyfile(ROOT/'experiments/V6/results.csv', ROOT/'results.csv')
+        shutil.copyfile(ROOT/args.output_root/'V6/results.csv', ROOT/'results.csv')
     else:
         run_variant(args)
 

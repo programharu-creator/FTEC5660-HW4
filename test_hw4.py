@@ -90,6 +90,18 @@ class RetrievalContracts(unittest.TestCase):
         self.assertTrue(all(set(['source','company','fiscal_year','doc_type']) <= set(c.metadata) for c in chunks))
         self.assertEqual(hw.USAGE.llm_calls, 0)
 
+    def test_header_ablation_preserves_chunk_boundaries(self):
+        try:
+            os.environ['HW4_VARIANT'] = 'V2a'
+            without, _ = self.build()
+            os.environ['HW4_VARIANT'] = 'V2'
+            with_headers, _ = self.build()
+            self.assertEqual(len(without), len(with_headers))
+            self.assertTrue(all(a.metadata == b.metadata and b.page_content.endswith(a.page_content)
+                                for a, b in zip(without, with_headers)))
+        finally:
+            os.environ['HW4_VARIANT'] = 'V6'
+
 
 if __name__ == '__main__':
     unittest.main()

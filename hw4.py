@@ -39,7 +39,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from rank_bm25 import BM25Okapi
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-_HW4_VARIANTS = ("B0", "V1", "V2", "V3", "V4", "V5", "V6")
+_HW4_VARIANTS = ("B0", "V1", "V2a", "V2", "V3", "V4", "V5", "V6")
 _HW4_COMPANIES: dict[str, str] = {}
 _HW4_BROKERS: set[str] = set()
 _HW4_SUFFIXES = {"inc", "corp", "corporation", "ltd", "limited", "plc", "llc", "co"}
@@ -49,7 +49,7 @@ def _hw4_level() -> int:
     mode = os.environ.get("HW4_VARIANT", "V6")
     if mode not in _HW4_VARIANTS:
         raise ValueError("HW4_VARIANT must be one of " + ", ".join(_HW4_VARIANTS))
-    return _HW4_VARIANTS.index(mode)
+    return 0 if mode == "B0" else 2 if mode == "V2a" else int(mode[1:])
 
 
 def _hw4_entity_key(value: str) -> str:
@@ -148,6 +148,9 @@ def _hw4_pack(records: list[tuple[str, str, str, str]], meta: dict) -> list[Docu
             header += "\n" + caption
         header = header[:500]
         content = header + "\n" + "\n".join(current)
+        if os.environ.get("HW4_VARIANT") == "V2a":
+            # Keep identical boundaries and table captions while isolating the contextual header.
+            content = content.partition("\n")[2]
         details = {**meta, "section": section, "kind": kind, "table_caption": caption}
         chunks.append(Document(page_content=content, metadata=details))
         current.clear()
