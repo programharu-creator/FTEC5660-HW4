@@ -1,0 +1,21 @@
+{
+  "author": "eula",
+  "upstream_commit": "89141195ffc63004dec6e8cac1d6ad19e7c862a4",
+  "dataset": "public_test",
+  "question_count": 60,
+  "model": "deepseek-v4-flash",
+  "generator_temperature": 0,
+  "retrieval_model_calls": 0,
+  "runs_per_variant": 1,
+  "variants": [
+    {"name": "B0", "change": "Required naive baseline: BeautifulSoup text, RecursiveCharacterTextSplitter, metadata, whitespace BM25 top 5, empty parser, always retrieve."},
+    {"name": "V1", "change": "Convert tables into text with row labels, column labels and captions."},
+    {"name": "V2", "change": "Replace fixed splitting with section and table boundary aware chunks and short contextual headers."},
+    {"name": "V3", "change": "Parse company, question year and document type, then filter the candidate set using document coverage."},
+    {"name": "V4", "change": "Normalize financial word forms and a fixed vocabulary of financial synonyms for lexical ranking."},
+    {"name": "V5", "change": "Allocate comparison results across all requested companies."},
+    {"name": "V6", "change": "Reject questions whose required content words lack support in the eligible documents."}
+  ],
+  "evaluation": "Use the provided scorer and fixed generator for each version in a fresh process; keep raw results, context records, logs, token counts and timings.",
+  "limitations": "Public development data guides improvements. The private set remains unseen. A single temperature-zero run per variant describes this public evaluation; hosted model responses may vary."
+}
