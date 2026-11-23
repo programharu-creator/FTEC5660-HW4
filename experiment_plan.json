@@ -8,14 +8,37 @@
   "retrieval_model_calls": 0,
   "runs_per_variant": 1,
   "variants": [
-    {"name": "B0", "change": "Required naive baseline: BeautifulSoup text, RecursiveCharacterTextSplitter, metadata, whitespace BM25 top 5, empty parser, always retrieve."},
-    {"name": "V1", "change": "Convert tables into text with row labels, column labels and captions."},
-    {"name": "V2", "change": "Replace fixed splitting with section and table boundary aware chunks and short contextual headers."},
-    {"name": "V3", "change": "Parse company, question year and document type, then filter the candidate set using document coverage."},
-    {"name": "V4", "change": "Normalize financial word forms and a fixed vocabulary of financial synonyms for lexical ranking."},
-    {"name": "V5", "change": "Allocate comparison results across all requested companies."},
-    {"name": "V6", "change": "Reject questions whose required content words lack support in the eligible documents."}
+    {
+      "name": "B0",
+      "change": "Required naive baseline: BeautifulSoup text, RecursiveCharacterTextSplitter, metadata, whitespace BM25 top 5, empty parser, always retrieve."
+    },
+    {
+      "name": "V1",
+      "change": "Convert tables into text with row labels, column labels and captions."
+    },
+    {
+      "name": "V2",
+      "change": "Replace fixed splitting with section and table boundary aware chunks and short contextual headers."
+    },
+    {
+      "name": "V3",
+      "change": "Parse company, question year and document type, then filter the candidate set using document coverage."
+    },
+    {
+      "name": "V4",
+      "change": "Apply a financial lexical normalizer: canonical word forms and synonyms, with question scaffolding and already-filtered company/date terms removed from the search query."
+    },
+    {
+      "name": "V5",
+      "change": "Allocate comparison results across all requested companies."
+    },
+    {
+      "name": "V6",
+      "change": "Reject questions whose required content words lack support in the eligible documents."
+    }
   ],
   "evaluation": "Use the provided scorer and fixed generator for each version in a fresh process; keep raw results, context records, logs, token counts and timings.",
-  "limitations": "Public development data guides improvements. The private set remains unseen. A single temperature-zero run per variant describes this public evaluation; hosted model responses may vary."
+  "limitations": "Public development data guides improvements. The private set remains unseen. A single temperature-zero run per variant describes this public evaluation; hosted model responses may vary.",
+  "provided_code_sha256_lf": "5c938c489015a0dec728dbc21cb442a7e60539e7b0bc21544525dc25fea796c2",
+  "development_note": "Public scoring and error analysis informed general parsing and lexical rules before the paid comparison. Inference reads only the supplied document text and the question; synthetic tests use separate invented companies and dates."
 }

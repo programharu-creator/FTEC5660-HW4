@@ -33,6 +33,251 @@ load_dotenv()
 # Your code: add imports, constants and helper functions here.
 # =============================================================================
 
+# Implementation author: eula
+from collections import defaultdict
+from bs4 import BeautifulSoup, NavigableString, Tag
+from rank_bm25 import BM25Okapi
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+_HW4_VARIANTS = ("B0", "V1", "V2", "V3", "V4", "V5", "V6")
+_HW4_COMPANIES: dict[str, str] = {}
+_HW4_BROKERS: set[str] = set()
+_HW4_SUFFIXES = {"inc", "corp", "corporation", "ltd", "limited", "plc", "llc", "co"}
+
+
+def _hw4_level() -> int:
+    mode = os.environ.get("HW4_VARIANT", "V6")
+    if mode not in _HW4_VARIANTS:
+        raise ValueError("HW4_VARIANT must be one of " + ", ".join(_HW4_VARIANTS))
+    return _HW4_VARIANTS.index(mode)
+
+
+def _hw4_entity_key(value: str) -> str:
+    words = re.findall(r"[a-z0-9]+", unicodedata.normalize("NFKC", str(value)).casefold())
+    return " ".join(word for word in words if word not in _HW4_SUFFIXES)
+
+
+def _hw4_text(node: Any) -> str:
+    return re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
+
+
+def _hw4_metadata(file_name: str, soup: BeautifulSoup) -> dict:
+    heading = soup.find("h1")
+    if heading is None:
+        raise ValueError("A document needs a company heading")
+    company = re.sub(r"\s*\([^)]*\)\s*$", "", _hw4_text(heading)).strip()
+    title = _hw4_text(soup.title) if soup.title else ""
+    first_headings = " ".join(_hw4_text(x) for x in soup.find_all(["h1", "h2", "p"], limit=8))
+    intro = title + " " + first_headings
+    broker = soup.select_one(".broker")
+    if broker or re.search(r"equity research|results review", intro, re.I):
+        doc_type = "research_report"
+        match = re.search(r"FY\s*(\d{4})\s+results review", intro, re.I)
+        if broker:
+            _HW4_BROKERS.add(_hw4_entity_key(_hw4_text(broker).split("|")[0]))
+    elif re.search(r"earnings (?:conference )?call|earnings conference|full year.*conference call", intro, re.I):
+        doc_type = "earnings_call"
+        match = re.search(r"Full Year\s+(\d{4})|Q4\s+FY\s*(\d{4})", intro, re.I)
+    else:
+        doc_type = "annual_report"
+        match = re.search(r"Annual Report\s+(\d{4})", intro, re.I)
+    if match is None:
+        match = re.search(r"\bFY\s*(\d{4})\b|\b(20\d{2})\b", intro)
+    if match is None:
+        raise ValueError("The document fiscal year could not be identified")
+    year = int(next(value for value in match.groups() if value is not None))
+    if doc_type == "annual_report":
+        years = {year - 1, year}
+    else:
+        years = {year}
+        for element in soup.find_all(["th", "h2", "h3", "p"]):
+            years.update(int(value) for value in re.findall(r"\b(?:FY|fiscal(?:\s+year)?)\s*(20\d{2})", _hw4_text(element), re.I))
+    _HW4_COMPANIES[_hw4_entity_key(company)] = company
+    return {"source": file_name, "company": company, "fiscal_year": year,
+            "doc_type": doc_type, "covered_years": sorted(years)}
+
+
+def _hw4_table_grid(table: Tag) -> list[list[tuple[str, bool]]]:
+    occupied: dict[tuple[int, int], tuple[str, bool]] = {}
+    rows = []
+    for row_number, row in enumerate(table.find_all("tr")):
+        column = 0
+        for cell in row.find_all(["th", "td"], recursive=False):
+            while (row_number, column) in occupied:
+                column += 1
+            value = (_hw4_text(cell), cell.name == "th")
+            row_span = max(1, int(cell.get("rowspan", 1)))
+            col_span = max(1, int(cell.get("colspan", 1)))
+            for dy in range(row_span):
+                for dx in range(col_span):
+                    occupied[row_number + dy, column + dx] = value
+            column += col_span
+        width = max((x + 1 for y, x in occupied if y == row_number), default=0)
+        rows.append([occupied.get((row_number, x), ("", False)) for x in range(width)])
+    return rows
+
+
+def _hw4_split_text(text: str, limit: int) -> list[str]:
+    pieces = []
+    while len(text) > limit:
+        cut = text.rfind(" ", 0, limit + 1)
+        if cut < limit // 2:
+            cut = limit
+        pieces.append(text[:cut].strip())
+        start = max(1, cut - min(120, limit // 5))
+        next_space = text.find(" ", start, cut)
+        text = text[next_space + 1 if next_space >= 0 else cut:].lstrip()
+    if text.strip():
+        pieces.append(text.strip())
+    return pieces
+
+
+def _hw4_pack(records: list[tuple[str, str, str, str]], meta: dict) -> list[Document]:
+    chunks: list[Document] = []
+    current: list[str] = []
+    current_group: tuple | None = None
+
+    def emit() -> None:
+        if not current:
+            return
+        kind, section, caption = current_group
+        header = f"{meta['company']} | {meta['doc_type']} | FY{meta['fiscal_year']}"
+        if section:
+            header += " | " + section
+        if caption:
+            header += "\n" + caption
+        header = header[:500]
+        content = header + "\n" + "\n".join(current)
+        details = {**meta, "section": section, "kind": kind, "table_caption": caption}
+        chunks.append(Document(page_content=content, metadata=details))
+        current.clear()
+
+    for kind, section, caption, text in records:
+        group = (kind, section, caption)
+        if group != current_group:
+            emit()
+            current_group = group
+        header = f"{meta['company']} | {meta['doc_type']} | FY{meta['fiscal_year']}"
+        if section:
+            header += " | " + section
+        if caption:
+            header += "\n" + caption
+        limit = MAX_CHUNK_CHARS - len(header[:500]) - 1
+        for piece in _hw4_split_text(text, limit):
+            if sum(len(item) + 1 for item in current) + len(piece) > limit:
+                emit()
+            current.append(piece)
+    emit()
+    return chunks
+
+
+_HW4_CANONICAL = {
+    "receivables": "receivable", "borrowings": "borrow", "borrowing": "borrow",
+    "employees": "employee", "headcount": "employee", "workforce": "employee",
+    "staff": "employee", "inventories": "inventory", "equivalents": "equivalent",
+    "auditor": "audit", "auditors": "audit", "audited": "audit",
+    "headquarters": "headquarter", "headquartered": "headquarter",
+    "programme": "program", "programmes": "program", "programs": "program",
+    "repurchases": "repurchase", "shares": "share", "activities": "activity",
+    "estimates": "estimate", "estimated": "estimate", "forecast": "estimate",
+    "forecasts": "estimate", "guides": "outlook", "guide": "outlook", "guidance": "outlook",
+    "statements": "statement", "expenses": "expense", "customers": "customer",
+    "sales": "revenue", "revenues": "revenue", "ratings": "rating",
+    "cfo": "chief financial officer", "ceo": "chief executive officer",
+}
+
+
+def _hw4_tokens(text: str, financial: bool = True) -> list[str]:
+    if not financial:
+        return text.lower().split()
+    text = unicodedata.normalize("NFKC", text).casefold().replace("\u2019", "'")
+    text = re.sub(r"\b([a-z]+)'s\b", r"\1", text)
+    tokens = re.findall(r"[a-z]+|\d+(?:[.,]\d+)*", text)
+    return [word for token in tokens for word in _HW4_CANONICAL.get(token, token).split()]
+
+
+def _hw4_parse_companies(question: str) -> list[str]:
+    text = re.sub(r"(?<=\w)['\u2019]s\b", " @ ", question)
+    lead = {"What", "Which", "Who", "How", "On", "In", "At", "For", "The", "Its"}
+    pattern = r"\b[A-Z][A-Za-z0-9&.-]*(?:\s+(?:(?:and|of|the)\s+)?[A-Z][A-Za-z0-9&.-]*)*"
+    result: list[str] = []
+    for match in re.finditer(pattern, text):
+        value = match.group().strip().rstrip(".")
+        words = value.split()
+        while words and words[0] in lead:
+            words.pop(0)
+        value = " ".join(words)
+        if not value or re.fullmatch(r"(?:FY\d{4}|Q\d|USD|FY)(?:\s+(?:FY\d{4}|Q\d|USD))*", value):
+            continue
+        values = [value]
+        if " and " in value and _hw4_entity_key(value) not in _HW4_COMPANIES:
+            if re.search(r"which company|compare|between|higher|more|greater", text, re.I):
+                values = value.split(" and ")
+        for candidate in values:
+            key = _hw4_entity_key(candidate)
+            if key in _HW4_BROKERS:
+                continue
+            if key not in _HW4_COMPANIES and re.match(r"Chief\b|December\b|Financial Officer\b", candidate):
+                continue
+            start = match.start() + match.group().find(candidate)
+            before = text[:max(start, 0)]
+            slot = re.search(r"(?:\b(?:was|were|did|does|for|of|give|audited|between|versus|or|and)\s*|:\s*)$", before, re.I)
+            if key in _HW4_COMPANIES or slot:
+                if key and key not in {_hw4_entity_key(item) for item in result}:
+                    result.append(candidate)
+    return result
+
+
+def _hw4_eligible(index: dict, parsed: dict) -> list[int]:
+    companies = [_hw4_entity_key(company) for company in parsed.get("companies", [])]
+    if companies and any(company not in index["companies"] for company in companies):
+        return []
+    dtype = parsed.get("doc_type", "annual_report")
+    year = parsed.get("fiscal_year")
+    selected = []
+    for company in companies or list(index["companies"]):
+        candidates = [i for i in index["companies"].get(company, [])
+                      if index["chunks"][i].metadata.get("doc_type") == dtype]
+        if year is not None:
+            candidates = [i for i in candidates if year in index["chunks"][i].metadata.get("covered_years", [])]
+            if dtype == "annual_report":
+                exact = [i for i in candidates if index["chunks"][i].metadata.get("fiscal_year") == year]
+                if exact:
+                    candidates = exact
+        if companies and not candidates:
+            return []
+        selected.extend(candidates)
+    return selected
+
+
+_HW4_QUERY_STOP = set("""
+a an the this that these those what which who how when where why much many more most higher lower
+largest_value large larger value amount total_number did does do has have had was were is are be been
+at by for from in into of on to with and or its their it as end ended year fiscal fy quarter fourth q
+usd us dollar dollars million millions billion billions percent percentage month months twelve
+report reports reported annual statement review results earnings conference call management company
+companies investment give set hold held generate generated earn earned spend spent announce announced
+city firm in_role during according please tell me could would
+""".split())
+
+
+def _hw4_supported(index: dict, question: str, parsed: dict, candidates: list[int]) -> bool:
+    tokens = set(_hw4_tokens(question))
+    entities = list(parsed.get("companies", [])) + list(_HW4_BROKERS)
+    for entity in entities:
+        tokens.difference_update(_hw4_tokens(entity))
+    required = {token for token in tokens if token not in _HW4_QUERY_STOP and not token[0].isdigit()}
+    if not required:
+        return True
+    groups: dict[str, list[int]] = defaultdict(list)
+    for i in candidates:
+        groups[_hw4_entity_key(index["chunks"][i].metadata["company"])].append(i)
+    for group in groups.values():
+        vocabulary = set().union(*(index["token_sets"][i] for i in group))
+        if required - vocabulary:
+            return False
+    return True
+
 
 def table_to_text(table_html: str) -> str:
     """Task 1.1: turn one HTML <table> into text that keeps every value with its row and its column.
@@ -43,7 +288,44 @@ def table_to_text(table_html: str) -> str:
     LLM here.
     """
     ### YOUR CODE HERE
-    return ""
+    soup = BeautifulSoup(table_html, "html.parser")
+    table = soup.find("table")
+    if table is None:
+        return ""
+    rows = _hw4_table_grid(table)
+    header_count = len(table.thead.find_all("tr")) if table.thead else 0
+    if not header_count:
+        for row in table.find_all("tr"):
+            cells = row.find_all(["th", "td"], recursive=False)
+            if cells and all(c.name == "th" and c.get("scope") != "row" for c in cells):
+                header_count += 1
+            else:
+                break
+    header_count = max(1, header_count)
+    width = max((len(row) for row in rows), default=0)
+    headers = []
+    for column in range(width):
+        labels = []
+        for row in rows[:header_count]:
+            if column < len(row) and row[column][0] and row[column][0] not in labels:
+                labels.append(row[column][0])
+        headers.append(" / ".join(labels))
+    caption = table.find("caption")
+    output = [_hw4_text(caption)] if caption else []
+    for row in rows[header_count:]:
+        if not row:
+            continue
+        label = row[0][0]
+        if all(value == row[0] for value in row):
+            output.append(label)
+            continue
+        values = [f"{headers[j]}: {cell[0]}" for j, cell in enumerate(row[1:], 1) if cell[0]]
+        line = " | ".join([label, *values])
+        if len(line) <= 400:
+            output.append(line)
+        else:
+            output.extend(f"{label} | {value}" for value in values)
+    return "\n".join(output)
 
 
 def chunk_document(file_name: str, html: str) -> list[Document]:
@@ -53,7 +335,42 @@ def chunk_document(file_name: str, html: str) -> list[Document]:
     "doc_type" (one of DOC_TYPES). Do not call the LLM here.
     """
     ### YOUR CODE HERE
-    return []
+    soup = BeautifulSoup(html, "html.parser")
+    meta = _hw4_metadata(file_name, soup)
+    level = _hw4_level()
+    if level < 2:
+        if level >= 1:
+            for table in list(soup.find_all("table")):
+                table.replace_with(NavigableString("\n" + table_to_text(str(table)) + "\n"))
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=160)
+        return [Document(page_content=text, metadata=dict(meta))
+                for text in splitter.split_text(soup.get_text(" ", strip=True))]
+    for unwanted in list(soup.find_all(["nav", "script", "style", "footer"])):
+        unwanted.decompose()
+    section = ""
+    subsection = ""
+    records = []
+    body = soup.body or soup
+    for element in body.descendants:
+        if not isinstance(element, Tag) or element.name not in {"h1", "h2", "h3", "p", "li", "table"}:
+            continue
+        if any(parent.name == "table" for parent in element.parents):
+            continue
+        text = _hw4_text(element)
+        if element.name == "h2":
+            section, subsection = text, ""
+        elif element.name == "h3":
+            subsection = text
+        elif element.name == "table":
+            caption_node = element.find("caption")
+            caption = _hw4_text(caption_node) if caption_node else ""
+            context = " / ".join(part for part in [section, subsection] if part)
+            for line in table_to_text(str(element)).splitlines():
+                records.append(("table", context, caption, line))
+        elif text:
+            context = " / ".join(part for part in [section, subsection] if part)
+            records.append(("text", context, "", text))
+    return _hw4_pack(records, meta)
 
 
 def parse_query(question: str) -> dict:
@@ -62,7 +379,18 @@ def parse_query(question: str) -> dict:
     The rules for each field are under Task 2.2 in the handout. You may use make_llm() here.
     """
     ### YOUR CODE HERE
-    return {}
+    if _hw4_level() < 3:
+        return {}
+    lowered = question.casefold()
+    if re.search(r"earnings (?:conference )?call|conference call|fourth.quarter.*call|q4.*call", lowered):
+        dtype = "earnings_call"
+    elif re.search(r"\b(?:rating|target price|forecasts?|results review|broker|equity research|estimates?)\b", lowered):
+        dtype = "research_report"
+    else:
+        dtype = "annual_report"
+    year = re.search(r"\b(?:FY\s*)?((?:19|20)\d{2})\b", question, re.I)
+    return {"companies": _hw4_parse_companies(question),
+            "fiscal_year": int(year[1]) if year else None, "doc_type": dtype}
 
 
 def build_index(chunks: list[Document]) -> Any:
@@ -71,7 +399,14 @@ def build_index(chunks: list[Document]) -> Any:
     Return anything retrieve() needs: a BM25 or TF-IDF index, the chunks grouped by metadata, ...
     """
     ### YOUR CODE HERE
-    return None
+    level = _hw4_level()
+    tokenized = [_hw4_tokens(chunk.page_content, level >= 4) for chunk in chunks]
+    by_company: dict[str, list[int]] = defaultdict(list)
+    for i, chunk in enumerate(chunks):
+        by_company[_hw4_entity_key(chunk.metadata.get("company", ""))].append(i)
+    return {"chunks": list(chunks), "bm25": BM25Okapi(tokenized) if chunks else None,
+            "companies": dict(by_company), "token_sets": [set(_hw4_tokens(c.page_content)) for c in chunks],
+            "level": level}
 
 
 def retrieve(index: Any, question: str) -> list[Document]:
@@ -80,7 +415,38 @@ def retrieve(index: Any, question: str) -> list[Document]:
     Return [] when the corpus cannot answer the question: the generator then answers NOT_FOUND.
     """
     ### YOUR CODE HERE
-    return []
+    if not index or not index["chunks"]:
+        return []
+    level = index["level"]
+    parsed = parse_query(question) if level >= 3 else {}
+    candidates = _hw4_eligible(index, parsed) if level >= 3 else list(range(len(index["chunks"])))
+    if not candidates:
+        return []
+    if level >= 6 and not _hw4_supported(index, question, parsed, candidates):
+        return []
+    query_tokens = _hw4_tokens(question, level >= 4)
+    if level >= 4:
+        entity_tokens = set()
+        for entity in parsed.get("companies", []) + list(_HW4_BROKERS):
+            entity_tokens.update(_hw4_tokens(entity))
+        focused = [token for token in query_tokens if token not in _HW4_QUERY_STOP
+                   and token not in entity_tokens and not token[0].isdigit()]
+        query_tokens = focused or query_tokens
+    scores = index["bm25"].get_scores(query_tokens)
+    ranked = sorted(candidates, key=lambda i: (-float(scores[i]), i))
+    requested = [_hw4_entity_key(company) for company in parsed.get("companies", [])]
+    if level >= 5 and len(requested) > 1:
+        groups = [[i for i in ranked if _hw4_entity_key(index["chunks"][i].metadata["company"]) == company]
+                  for company in requested]
+        selected = []
+        for position in range(MAX_RETRIEVED):
+            for group in groups:
+                if position < len(group):
+                    selected.append(group[position])
+                    if len(selected) == MAX_RETRIEVED:
+                        return [index["chunks"][i] for i in selected]
+        return [index["chunks"][i] for i in selected]
+    return [index["chunks"][i] for i in ranked[:MAX_RETRIEVED]]
 
 
 # =============================================================================
