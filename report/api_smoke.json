@@ -1,0 +1,13 @@
+{
+  "author": "eula",
+  "status": "ok",
+  "model": "deepseek-v4-flash",
+  "reply": "OK",
+  "usage": {
+    "llm_calls": 1,
+    "llm_input_tokens": 8,
+    "llm_output_tokens": 1,
+    "cost_usd": 0.0
+  },
+  "seconds": 2.289780499995686
+}

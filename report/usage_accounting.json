@@ -1,0 +1,11 @@
+{
+  "author": "eula",
+  "primary_variant_calls": 436,
+  "fresh_clone_runs": 2,
+  "smoke_calls": 1,
+  "all_paid_calls": 529,
+  "all_input_tokens": 699442,
+  "all_output_tokens": 1758,
+  "estimated_usd_course_prices": 0.10597110000000001,
+  "note": "Includes the eight primary rows, two fresh-clone checks and the API smoke. Prices are the provided course estimates."
+}

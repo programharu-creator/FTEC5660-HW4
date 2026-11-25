@@ -1,0 +1,27 @@
+{
+  "author": "eula",
+  "stage": "local_assignment_complete",
+  "student": "SANG Yuchen",
+  "student_id": "1155262204",
+  "primary_variants": [
+    "B0",
+    "V1",
+    "V2a",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6"
+  ],
+  "final_public_correct": 60,
+  "public_questions": 60,
+  "estimated_automatic_points": 75,
+  "automatic_points_available": 75,
+  "ta_assessed_points": 25,
+  "fresh_clone_verified": true,
+  "model_calls_in_retrieval": 0,
+  "pending": [
+    "Publish the required public fork after browser login.",
+    "Submit the public GitHub link on Blackboard."
+  ]
+}

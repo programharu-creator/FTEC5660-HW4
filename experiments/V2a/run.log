@@ -1,0 +1,38 @@
+40 documents, 60 questions
+
+Task 1.1 table_to_text: 100.0% of the table cells kept with their labels
+Task 1.2 chunk_document: 100.0% of the documents pass
+865 chunks to index
+Index built in 0.6s | {'llm_calls': 0, 'llm_input_tokens': 0, 'llm_output_tokens': 0, 'cost_usd': 0.0}
+V2a: completed 10/60 answer attempts
+V2a: completed 20/60 answer attempts
+V2a: completed 30/60 answer attempts
+V2a: completed 40/60 answer attempts
+V2a: completed 50/60 answer attempts
+V2a: completed 60/60 answer attempts
+Wrote C:\Users\eula.sang\codex-web\FTEC5660-HW4\experiments\V2a\results.csv
+Task 2.1 valid, non-empty retrieval on answerable questions: 100.0%
+Task 2.2 parse_query fields right: 0.0%
+Task 2.3 retrieval recall@5 on answerable questions: 28.3%
+Task 3   answerable questions with chunks: 100.0% | unanswerable questions with []: 0.0%
+Task 4   answer accuracy: 43.3%
+
+By category       accuracy   recall
+  comparison         8.3%     0.0%
+  fact              58.3%    66.7%
+  table             22.7%    22.7%
+  unanswerable      92.9%        -
+
+Estimated points (the grade uses the private set):
+  Task 1.1   8.00 / 8
+  Task 1.2   7.00 / 7
+  Task 2.1   5.00 / 5
+  Task 2.2   0.00 / 10
+  Task 2.3   0.00 / 15
+  Task 3     0.00 / 10
+  Task 4     8.67 / 20
+  Total     28.67 / 75
+
+Your usage: {'llm_calls': 0, 'llm_input_tokens': 0, 'llm_output_tokens': 0, 'cost_usd': 0.0}
+Generator usage: {'llm_calls': 60, 'llm_input_tokens': 57101, 'llm_output_tokens': 184, 'cost_usd': 0.0087}
+Time: 6.0s (index 0.6s, retrieval 0.1s)

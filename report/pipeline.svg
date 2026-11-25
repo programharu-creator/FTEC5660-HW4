@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="490" viewBox="0 0 1200 490">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>eula</dc:creator></metadata>
+<title>Homework 4 retrieval pipeline</title>
+<rect width="1200" height="490" fill="#f5f7f8"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#087f83"/></marker></defs>
+<line x1="275" y1="80" x2="325" y2="80" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="575" y1="80" x2="625" y2="80" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="875" y1="80" x2="925" y2="80" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="275" y1="235" x2="325" y2="235" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="575" y1="235" x2="625" y2="235" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="875" y1="235" x2="925" y2="235" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1050" y1="125" x2="1050" y2="157" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1050" y1="157" x2="450" y2="157" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="450" y1="157" x2="450" y2="190" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1050" y1="280" x2="1050" y2="310" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="1050" y1="310" x2="750" y2="310" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="750" y1="310" x2="750" y2="345" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="875" y1="390" x2="925" y2="390" stroke="#087f83" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="25" y="35" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="40" y="67" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">HTML reports</text>
+<text x="40" y="96" font-family="Arial,sans-serif" font-size="13" fill="#526875">Supplied document text</text>
+<rect x="325" y="35" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="340" y="67" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Parse tables</text>
+<text x="340" y="96" font-family="Arial,sans-serif" font-size="13" fill="#526875">Preserve rows, columns and units</text>
+<rect x="625" y="35" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="640" y="67" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Create chunks</text>
+<text x="640" y="96" font-family="Arial,sans-serif" font-size="13" fill="#526875">Sections, tables and metadata</text>
+<rect x="925" y="35" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="940" y="67" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Build lexical index</text>
+<text x="940" y="96" font-family="Arial,sans-serif" font-size="13" fill="#526875">BM25 in memory</text>
+<rect x="25" y="190" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="40" y="222" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Parse the question</text>
+<text x="40" y="251" font-family="Arial,sans-serif" font-size="13" fill="#526875">Company, year and document type</text>
+<rect x="325" y="190" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="340" y="222" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Filter candidates</text>
+<text x="340" y="251" font-family="Arial,sans-serif" font-size="13" fill="#526875">Exact company and year coverage</text>
+<rect x="625" y="190" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="640" y="222" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Rank and balance</text>
+<text x="640" y="251" font-family="Arial,sans-serif" font-size="13" fill="#526875">Financial terms and each company</text>
+<rect x="925" y="190" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="940" y="222" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Check support</text>
+<text x="940" y="251" font-family="Arial,sans-serif" font-size="13" fill="#526875">Required topic words in evidence</text>
+<rect x="625" y="345" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="640" y="377" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Up to five chunks</text>
+<text x="640" y="406" font-family="Arial,sans-serif" font-size="13" fill="#526875">Original chunk objects</text>
+<rect x="925" y="345" width="250" height="90" rx="12" fill="white" stroke="#b9d3d4"/>
+<text x="940" y="377" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#142536">Fixed course generator</text>
+<text x="940" y="406" font-family="Arial,sans-serif" font-size="13" fill="#526875">Answer or NOT_FOUND</text>
+<text x="25" y="385" font-family="Arial,sans-serif" font-size="17" fill="#142536">Missing company, year or topic support:</text>
+<text x="25" y="416" font-family="Arial,sans-serif" font-size="17" fill="#087f83">Return [] and the runner produces NOT_FOUND.</text>
+<text x="25" y="467" font-family="Arial,sans-serif" font-size="12" fill="#526875">Author: eula. Retrieval uses the supplied HTML and question; the fixed generator is provided by the course.</text>
+</svg>
