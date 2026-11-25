@@ -216,6 +216,13 @@ The source assignment is [hz0567/FTEC5660-HW4](https://github.com/hz0567/FTEC566
             'primary_variants':ORDER,'final_public_correct':60,'public_questions':60,'estimated_automatic_points':75,
             'automatic_points_available':75,'ta_assessed_points':25,'fresh_clone_verified':True,'model_calls_in_retrieval':0,
             'pending':['Publish the required public fork after browser login.','Submit the public GitHub link on Blackboard.']}
+    status_path=ROOT/'submission_status.json'
+    if status_path.exists():
+        previous=json.loads(status_path.read_text(encoding='utf-8'))
+        if previous.get('github_published'):
+            status.update(stage='published_ready_for_course_submission',github_published=True,
+                          github_url=previous['github_url'],github_visibility='public',github_fork=True,
+                          pending=['Review the reflection and submit the public GitHub link on Blackboard.'])
     (ROOT/'submission_status.json').write_text(json.dumps(status,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({'primary_rows':len(summaries),'final_accuracy':final['accuracy'],'estimated_automatic_points':final['total_automatic_points'],'all_paid_calls':calls,'estimated_usd':usage['estimated_usd_course_prices'],'evidence_files':len(evidence)},indent=2))
 

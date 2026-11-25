@@ -1,6 +1,6 @@
 {
   "author": "eula",
-  "stage": "local_assignment_complete",
+  "stage": "published_ready_for_course_submission",
   "student": "SANG Yuchen",
   "student_id": "1155262204",
   "primary_variants": [
@@ -21,7 +21,10 @@
   "fresh_clone_verified": true,
   "model_calls_in_retrieval": 0,
   "pending": [
-    "Publish the required public fork after browser login.",
-    "Submit the public GitHub link on Blackboard."
-  ]
+    "Review the reflection and submit the public GitHub link on Blackboard."
+  ],
+  "github_published": true,
+  "github_url": "https://github.com/programharu-creator/FTEC5660-HW4",
+  "github_visibility": "public",
+  "github_fork": true
 }
