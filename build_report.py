@@ -197,7 +197,7 @@ The public labels informed development, and this sample provides development res
 
 ## Reflection
 
-The Task 6 reflection is in [REFLECTION.md](REFLECTION.md). Four connected paragraphs use the Homework 4 experiments, evidence checks and comparison results to consider future ambitions, responsibility, chosen effort, identity and practical habits. Selected experiences from finance study, securities automation, consulting, procurement, research and creative activities connect the assignment to personal goals. AI assistance is disclosed as allowed by the handout, and the original CV stays outside this repository.
+The Task 6 reflection is available as [REFLECTION.pdf](REFLECTION.pdf), with the editable text in [REFLECTION.md](REFLECTION.md). Four connected paragraphs use the Homework 4 experiments, evidence checks and comparison results to consider future ambitions, responsibility, chosen effort, identity and practical habits. Selected experiences from finance study, securities automation, consulting, procurement, research and creative activities connect the assignment to personal goals. AI assistance is disclosed as allowed by the handout, and the original CV stays outside this repository.
 
 ## Submission
 
