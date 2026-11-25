@@ -197,7 +197,7 @@ The public labels informed development, and this sample provides development res
 
 ## Reflection
 
-The Task 6 reflection is in [REFLECTION.md](REFLECTION.md). It addresses personal judgment, continuing ambitions, relationships, chosen effort, valuable abilities, identity and practical changes to begin tomorrow, with AI assistance disclosed as allowed by the handout.
+The Task 6 reflection is in [REFLECTION.md](REFLECTION.md). Four connected paragraphs relate finance and FinTech study, securities automation work, consulting and procurement experience, international activities, research and creative interests to the seven reflection questions. AI assistance is disclosed as allowed by the handout, and selected experiences inform the reflection while the original CV stays outside this repository.
 
 ## Submission
 
